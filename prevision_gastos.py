@@ -8,32 +8,23 @@ from matplotlib.gridspec import GridSpec
 import matplotlib.ticker as mtick
 
 ## -------- DATA --------
-year_begining = 2026
-month_begining = 4
-year_end = 2031
-minimum_savings_months = 6
-
-salario_mensual = 1300
-salario_extra = 1600   # If there is no extra salary this is 0
-ahorros = 5000
-
-# df_montly_payment = pd.DataFrame([ 
-#     ["Coche", 332, datetime.datetime(2025,1,1), datetime.datetime(2029,11,1)],
-#     ["Gimnasio", 40, datetime.datetime(year_begining,month_begining,1), datetime.datetime(year_end,12,1)],
-#     ["Ocio", 300, datetime.datetime(year_begining,month_begining,1), datetime.datetime(year_end,12,1)],
-#     ["Hipoteca", 800, datetime.datetime(2029,2,1), datetime.datetime(year_end,12,1)]
-# ], columns=['Name', 'Quantity', 'Start', 'End'])
-# 
-# df_payments = pd.DataFrame([
-#     ["Trip", datetime.datetime(2026,4,15), 1000],
-#     ["Car Final Payment", datetime.datetime(2029,12,10), 10000]
-# ], columns=['Name', 'Date', 'Quantity'])
-
 with open('data.json', 'r') as f:
     data = json.load(f)
 
+year_begining = data['year_begining']
+month_begining = data['month_begining']
+year_end = data['year_end']
+minimum_savings_months = data['minimum_savings_months']
+salario_mensual = data['salario_mensual']
+salario_extra = data['salario_extra']
+ahorros = data['ahorros']
+
 df_montly_payment = pd.DataFrame(data['monthly_payment'])
 df_payments = pd.DataFrame(data['payments'])
+
+df_montly_payment['Start'] = pd.to_datetime(df_montly_payment['Start'], dayfirst=True)
+df_montly_payment['End'] = pd.to_datetime(df_montly_payment['End'], dayfirst=True)
+df_payments['Date'] = pd.to_datetime(df_payments['Date'], dayfirst=True)
 
 ## -------------- Operations --------------
 ## Inicializo
@@ -148,5 +139,3 @@ for ax in [main_ax, x_hist]:
 # Finally
 fig.savefig("savings.png", bbox_inches='tight')
 plt.show()
-
-print('Done!')

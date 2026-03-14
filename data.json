@@ -1,16 +1,29 @@
 {
+    "year_begining" : 2026,
+    "month_begining" : 4,
+    "year_end" : 2031,
+    "minimum_savings_months" : 6,
+    "salario_mensual" : 1300,
+    "salario_extra" : 1600,
+    "ahorros" : 5000,
     "monthly_payment" : [
         {
             "Name" : "Coche",
-            "Quantity" : "332",
+            "Quantity" : 332,
             "Start" : "1-1-2025",
             "End" : "30-12-2029"
+        },
+        {
+            "Name" : "Alquiler",
+            "Quantity" : 400,
+            "Start" : "1-1-2025",
+            "End" : "30-12-2030"
         }
     ],
     "payments" : [
         {
             "Name" : "Car Final Payment",
-            "Quantity" : "10000",
+            "Quantity" : 10000,
             "Date" : "20-1-2029"
         }
     ]

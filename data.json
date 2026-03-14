@@ -1,0 +1,17 @@
+{
+    "monthly_payment" : [
+        {
+            "Name" : "Coche",
+            "Quantity" : "332",
+            "Start" : "1-1-2025",
+            "End" : "30-12-2029"
+        }
+    ],
+    "payments" : [
+        {
+            "Name" : "Car Final Payment",
+            "Quantity" : "10000",
+            "Date" : "20-1-2029"
+        }
+    ]
+}

@@ -1,4 +1,5 @@
 import datetime
+import json
 from dateutil.relativedelta import relativedelta
 import matplotlib.pyplot as plt
 import numpy as np
@@ -16,24 +17,30 @@ salario_mensual = 1300
 salario_extra = 1600   # If there is no extra salary this is 0
 ahorros = 5000
 
-gastos_mensuales = pd.DataFrame([ 
-    ["Coche", 332, datetime.datetime(2025,1,1), datetime.datetime(2029,11,1)],
-    ["Gimnasio", 40, datetime.datetime(year_begining,month_begining,1), datetime.datetime(year_end,12,1)],
-    ["Ocio", 300, datetime.datetime(year_begining,month_begining,1), datetime.datetime(year_end,12,1)],
-    ["Hipoteca", 800, datetime.datetime(2029,2,1), datetime.datetime(year_end,12,1)]
-], columns=['Concepto', 'Cantidad', 'Fecha_inicio', 'Fecha_final'])
+# df_montly_payment = pd.DataFrame([ 
+#     ["Coche", 332, datetime.datetime(2025,1,1), datetime.datetime(2029,11,1)],
+#     ["Gimnasio", 40, datetime.datetime(year_begining,month_begining,1), datetime.datetime(year_end,12,1)],
+#     ["Ocio", 300, datetime.datetime(year_begining,month_begining,1), datetime.datetime(year_end,12,1)],
+#     ["Hipoteca", 800, datetime.datetime(2029,2,1), datetime.datetime(year_end,12,1)]
+# ], columns=['Name', 'Quantity', 'Start', 'End'])
+# 
+# df_payments = pd.DataFrame([
+#     ["Trip", datetime.datetime(2026,4,15), 1000],
+#     ["Car Final Payment", datetime.datetime(2029,12,10), 10000]
+# ], columns=['Name', 'Date', 'Quantity'])
 
-gastos_puntuales = pd.DataFrame([
-    ["Trip", datetime.datetime(2026,4,15), 1000],
-    ["Car Final Payment", datetime.datetime(2029,12,10), 10000]
-], columns=['Concepto', 'Fecha', 'Cantidad'])
+with open('data.json', 'r') as f:
+    data = json.load(f)
+
+df_montly_payment = pd.DataFrame(data['monthly_payment'])
+df_payments = pd.DataFrame(data['payments'])
 
 ## -------------- Operations --------------
 ## Inicializo
-total_gastos_mensuales = gastos_mensuales["Cantidad"].sum(axis=0)
+total_gastos_mensuales = df_montly_payment["Quantity"].sum(axis=0)
 
-fechas = np.arange(datetime.datetime(year_begining, month_begining, 1), datetime.datetime(year_end, 12, 1), np.timedelta64(1, 'M'), dtype='datetime64[M]').astype('datetime64[D]')
-d = {"Fecha": fechas, "Ahorro GASTO": np.zeros((fechas.size)), "Ahorro NO_GASTO" : np.zeros((fechas.size)), "Balance" : np.zeros((fechas.size)), 'Minimo' : np.zeros((fechas.size))}
+Dates = np.arange(datetime.datetime(year_begining, month_begining, 1), datetime.datetime(year_end, 12, 1), np.timedelta64(1, 'M'), dtype='datetime64[M]').astype('datetime64[D]')
+d = {"Date": Dates, "Ahorro GASTO": np.zeros((Dates.size)), "Ahorro NO_GASTO" : np.zeros((Dates.size)), "Balance" : np.zeros((Dates.size)), 'Minimo' : np.zeros((Dates.size))}
 savings = pd.DataFrame(data=d)
 
 def calculateIngress(datetime64):
@@ -48,14 +55,14 @@ def calculatePayments(datetime64):
     #initialize
     payments = 0
     # iterating to check regular payments
-    for index, row2 in gastos_mensuales.iterrows():
-        if ((datetime64 >= pd.to_datetime(row2["Fecha_inicio"])) & (datetime64 <= pd.to_datetime(row2['Fecha_final']))):
-            payments += gastos_mensuales.loc[index, 'Cantidad']
+    for index, row2 in df_montly_payment.iterrows():
+        if ((datetime64 >= pd.to_datetime(row2["Start"])) & (datetime64 <= pd.to_datetime(row2['End']))):
+            payments += df_montly_payment.loc[index, 'Quantity']
 
     # iterating to check regular payments
-    for index, row2 in gastos_puntuales.iterrows():
-        if ((datetime64.year == pd.to_datetime(row2['Fecha']).year) & (datetime64.month == pd.to_datetime(row2['Fecha']).month)):
-            payments += row2['Cantidad']
+    for index, row2 in df_payments.iterrows():
+        if ((datetime64.year == pd.to_datetime(row2['Date']).year) & (datetime64.month == pd.to_datetime(row2['Date']).month)):
+            payments += row2['Quantity']
     
     return payments
 
@@ -75,12 +82,12 @@ savings.loc[0, "Ahorro NO_GASTO"] = ahorros
 # Iterate the data
 for index, row in savings.iterrows():
     if index != 0:
-        ingreso_del_mes = calculateIngress(pd.to_datetime(savings.loc[index, "Fecha"]))
-        gastos_del_mes = calculatePayments(pd.to_datetime(savings.loc[index, "Fecha"]))
+        ingreso_del_mes = calculateIngress(pd.to_datetime(savings.loc[index, "Date"]))
+        gastos_del_mes = calculatePayments(pd.to_datetime(savings.loc[index, "Date"]))
         savings.loc[index, "Ahorro GASTO"] = savings.loc[index -1, "Ahorro GASTO"] + ingreso_del_mes - gastos_del_mes
         savings.loc[index, "Ahorro NO_GASTO"] = savings.loc[index -1, "Ahorro NO_GASTO"] + ingreso_del_mes
         savings.loc[index, 'Balance'] = ingreso_del_mes - gastos_del_mes
-        savings.loc[index, 'Minimo'] = calculateMinimumSavings(pd.to_datetime(savings.loc[index, "Fecha"]))
+        savings.loc[index, 'Minimo'] = calculateMinimumSavings(pd.to_datetime(savings.loc[index, "Date"]))
 
 ## --------- PLOTTING ---------
 # Config
@@ -98,16 +105,16 @@ fmt = '{x:,.0f} €' # Using .0f for cleaner labels if cents aren't vital
 tick = mtick.StrMethodFormatter(fmt)
 main_ax.yaxis.set_major_formatter(tick)
 
-main_ax.plot(savings['Fecha'], savings['Ahorro GASTO'], label='Ahorro', linewidth=2)
-main_ax.plot(savings['Fecha'], savings['Ahorro NO_GASTO'], label='Teorico', linestyle = '--', linewidth=2)
-main_ax.plot(savings['Fecha'], savings['Minimo'], label='Minimum', linestyle = ':', color = 'red', linewidth=1)
+main_ax.plot(savings['Date'], savings['Ahorro GASTO'], label='Ahorro', linewidth=2)
+main_ax.plot(savings['Date'], savings['Ahorro NO_GASTO'], label='Teorico', linestyle = '--', linewidth=2)
+main_ax.plot(savings['Date'], savings['Minimo'], label='Minimum', linestyle = ':', color = 'red', linewidth=1)
 main_ax.legend(loc='upper left', frameon=True)
 
 # --- Style Balance Plot (Bottom) ---
 # Logic for color-coding: Green for positive, Red for negative
 colors = ['#2ecc71' if x > 0 else '#e74c3c' for x in savings['Balance']]
 
-x_hist.bar(savings['Fecha'], savings['Balance'], color=colors, edgecolor='white', linewidth=0.5, width=20)
+x_hist.bar(savings['Date'], savings['Balance'], color=colors, edgecolor='white', linewidth=0.5, width=20)
 
 # Add a horizontal baseline at 0 for clarity
 x_hist.axhline(0, color='black', linewidth=0.8, alpha=0.7)
@@ -125,8 +132,8 @@ for ax in [main_ax, x_hist]:
 
 # --- Add Trimester Vertical Lines ---
 # Generate dates for the start of each quarter within your data range
-start_date = savings['Fecha'].min()
-end_date = savings['Fecha'].max()
+start_date = savings['Date'].min()
+end_date = savings['Date'].max()
 trimesters = pd.date_range(start=start_date, end=end_date, freq='QS') # 'QS' = Quarter Start
 years = pd.date_range(start=start_date, end=end_date, freq='YS') # 'YS' = Year Start
 
@@ -141,3 +148,5 @@ for ax in [main_ax, x_hist]:
 # Finally
 fig.savefig("savings.png", bbox_inches='tight')
 plt.show()
+
+print('Done!')

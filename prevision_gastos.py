@@ -61,9 +61,9 @@ def calculateMinimumSavings(datetime64):
     expectedPayments = 0
     # Compute expected payments in the next months
     for month in np.arange(minimum_savings_months):
-        expectedPayments += calculatePayments(datetime64 + relativedelta(months = month - 1))
+        expectedPayments += calculatePayments(datetime64 + relativedelta(months = month))
     
-    return expectedPayments * 1.5
+    return expectedPayments
     
 
 # Initialize data

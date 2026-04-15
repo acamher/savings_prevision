@@ -227,9 +227,23 @@ function App() {
           </section>
 
           <section className="panel">
-            <div className="panel-heading">
-              <h2>Pagas extra</h2>
-              <p>Se repiten cada año en el mes elegido.</p>
+            <div className="section-header">
+              <div className="panel-heading">
+                <h2>Pagas extra</h2>
+                <p>Se repiten cada año en el mes elegido.</p>
+              </div>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() =>
+                  setDraftPlan((current) => ({
+                    ...current,
+                    extraIncomes: [...current.extraIncomes, createExtraIncome()],
+                  }))
+                }
+              >
+                Añadir paga
+              </button>
             </div>
 
             <div className="entry-stack">
@@ -276,6 +290,21 @@ function App() {
                       ))}
                     </select>
                   </label>
+
+                  <button
+                    className="ghost-button"
+                    type="button"
+                    onClick={() =>
+                      setDraftPlan((current) => ({
+                        ...current,
+                        extraIncomes: current.extraIncomes.filter(
+                          (income) => income.id !== entry.id,
+                        ),
+                      }))
+                    }
+                  >
+                    Eliminar
+                  </button>
                 </div>
               ))}
             </div>
@@ -645,9 +674,9 @@ function App() {
 }
 
 function SavingsChart({ months }: { months: ProjectionMonth[] }) {
-  const width = 920
+  const width = 960
   const height = 260
-  const paddingX = 28
+  const paddingX = 70
   const paddingY = 20
   const usableWidth = width - paddingX * 2
   const usableHeight = height - paddingY * 2
@@ -676,11 +705,15 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
   const zeroLineY = yFor(0)
   const yearMarkers = points.filter((_, index) => index % 12 === 0 || index === points.length - 1)
 
+  // Generate horizontal gridlines at nice intervals
+  const horizontalGridlines = generateHorizontalGridlines(minimum, maximum, range, paddingX, paddingX + usableWidth, yFor)
+
   return (
     <div className="chart-frame">
       <svg
         className="savings-chart"
         viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
         role="img"
         aria-label="Gráfico de evolución del ahorro"
       >
@@ -698,6 +731,26 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
           x2={paddingX + usableWidth}
           y2={zeroLineY}
         />
+        {horizontalGridlines.map((line, index) => (
+          <g key={`h-grid-${index}`}>
+            <line
+              className="chart-horizontal-guide"
+              x1={paddingX}
+              y1={line.y}
+              x2={paddingX + usableWidth}
+              y2={line.y}
+            />
+            <text
+              className="chart-axis-label"
+              x={paddingX - 8}
+              y={line.y}
+              textAnchor="end"
+              dominantBaseline="middle"
+            >
+              {formatCurrency(line.value)}
+            </text>
+          </g>
+        ))}
         {yearMarkers.map((marker) => (
           <line
             className="chart-year-guide"
@@ -719,6 +772,35 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
       </div>
     </div>
   )
+}
+
+function generateHorizontalGridlines(
+  minimum: number,
+  maximum: number,
+  range: number,
+  x1: number,
+  x2: number,
+  yFor: (value: number) => number
+) {
+  const gridlines = []
+  
+  // Calculate nice interval based on range
+  let interval = Math.pow(10, Math.floor(Math.log10(range)))
+  if (range / interval < 3) interval /= 2
+  if (range / interval < 3) interval /= 2.5
+  
+  // Start from a nice round number
+  const startValue = Math.ceil(minimum / interval) * interval
+  
+  // Generate gridlines
+  for (let value = startValue; value <= maximum; value += interval) {
+    gridlines.push({
+      value,
+      y: yFor(value),
+    })
+  }
+  
+  return gridlines
 }
 
 function buildYearSummaries(months: ProjectionMonth[]): YearSummary[] {
@@ -795,6 +877,15 @@ function createMonthlyIncome(): MonthlyIncome {
     id: createId('income'),
     label: '',
     amount: 0,
+  }
+}
+
+function createExtraIncome(): ExtraIncome {
+  return {
+    id: createId('extra'),
+    label: '',
+    amount: 0,
+    month: 1,
   }
 }
 

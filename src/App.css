@@ -103,25 +103,33 @@
 }
 
 .income-grid {
-  grid-template-columns: minmax(0, 1.6fr) minmax(150px, 0.8fr) auto;
+  grid-template-columns: minmax(0, 1.6fr) minmax(100px, 0.8fr) auto;
 }
 
 .extra-grid {
-  grid-template-columns: minmax(0, 1.4fr) minmax(140px, 0.7fr) minmax(130px, 0.7fr);
+  grid-template-columns: minmax(0, 1.4fr) minmax(100px, 0.7fr) minmax(100px, 0.7fr);
+  grid-template-rows: auto auto;
 }
+
+.extra-grid > :nth-child(1) { grid-column: 1; grid-row: 1; }
+.extra-grid > :nth-child(2) { grid-column: 2; grid-row: 1; }
+.extra-grid > :nth-child(3) { grid-column: 3; grid-row: 1; }
+.extra-grid > :nth-child(4) { grid-column: 1 / -1; grid-row: 2; width: fit-content; }
 
 .recurring-grid {
-  grid-template-columns:
-    minmax(0, 1.5fr)
-    minmax(130px, 0.75fr)
-    minmax(140px, 0.85fr)
-    minmax(140px, 0.85fr)
-    minmax(140px, 0.85fr)
-    auto;
+  grid-template-columns: minmax(0, 1.5fr) minmax(100px, 0.8fr) minmax(110px, 0.85fr);
+  grid-template-rows: auto auto;
 }
 
+.recurring-grid > :nth-child(1) { grid-column: 1; grid-row: 1; }
+.recurring-grid > :nth-child(2) { grid-column: 2; grid-row: 1; }
+.recurring-grid > :nth-child(3) { grid-column: 3; grid-row: 1; }
+.recurring-grid > :nth-child(4) { grid-column: 1; grid-row: 2; }
+.recurring-grid > :nth-child(5) { grid-column: 2; grid-row: 2; }
+.recurring-grid > :nth-child(6) { grid-column: 3; grid-row: 2; }
+
 .one-time-grid {
-  grid-template-columns: minmax(0, 1.6fr) minmax(140px, 0.8fr) minmax(160px, 0.9fr) auto;
+  grid-template-columns: minmax(0, 1.6fr) minmax(100px, 0.8fr) minmax(120px, 0.9fr) auto;
 }
 
 .field {
@@ -252,12 +260,14 @@ button {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-width: 0;
 }
 
 .savings-chart {
   width: 100%;
   height: auto;
   display: block;
+  min-width: 0;
 }
 
 .chart-baseline,
@@ -270,6 +280,13 @@ button {
   stroke: var(--alert-soft);
   stroke-width: 1;
   stroke-dasharray: 5 5;
+}
+
+.chart-horizontal-guide {
+  stroke: var(--border);
+  stroke-width: 0.8;
+  stroke-dasharray: 3 4;
+  opacity: 0.6;
 }
 
 .chart-year-guide {
@@ -294,6 +311,14 @@ button {
   gap: 8px;
   font-size: 12px;
   color: var(--muted);
+  padding-left: 70px;
+  padding-right: 28px;
+}
+
+.chart-axis-label {
+  font-size: 13px;
+  fill: var(--muted-strong);
+  font-weight: 500;
 }
 
 .split-layout {

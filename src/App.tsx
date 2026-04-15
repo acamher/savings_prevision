@@ -782,35 +782,35 @@ function createDefaultPlan(): SavingsPlanInput {
 
   return {
     startMonth,
-    initialSavings: 12000,
+    initialSavings: 5000,
     projectionMonths: 60,
     monthlyIncomes: [
-      { id: createId('income'), label: 'Nómina neta', amount: 2650 },
+      { id: createId('income'), label: 'Nómina neta', amount: 1500 },
       { id: createId('income'), label: 'Alquiler de plaza', amount: 90 },
     ],
     extraIncomes: [
-      { id: createId('extra'), label: 'Paga de verano', amount: 2400, month: 6 },
-      { id: createId('extra'), label: 'Paga de navidad', amount: 2400, month: 12 },
+      { id: createId('extra'), label: 'Paga de verano', amount: 2000, month: 6 },
+      { id: createId('extra'), label: 'Paga de navidad', amount: 2000, month: 12 },
     ],
     recurringExpenses: [
       {
         id: createId('expense'),
         label: 'Vivienda y suministros',
-        amount: 1320,
+        amount: 600,
         frequency: 'monthly',
         startMonth,
       },
       {
         id: createId('expense'),
         label: 'Seguro del coche',
-        amount: 680,
+        amount: 500,
         frequency: 'annual',
         startMonth,
       },
       {
         id: createId('expense'),
         label: 'Mantenimiento y ocio',
-        amount: 380,
+        amount: 250,
         frequency: 'monthly',
         startMonth,
       },
@@ -818,7 +818,7 @@ function createDefaultPlan(): SavingsPlanInput {
     oneTimeExpenses: [
       {
         id: createId('payment'),
-        label: 'Entrada del coche',
+        label: 'Pago final del coche',
         amount: 6500,
         date: shiftMonth(startMonth, 2),
       },

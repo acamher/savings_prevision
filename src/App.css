@@ -261,64 +261,11 @@ button {
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  position: relative;
 }
 
-.savings-chart {
-  width: 100%;
-  height: auto;
-  display: block;
-  min-width: 0;
-}
-
-.chart-baseline,
-.chart-year-guide {
-  stroke: var(--border);
-  stroke-width: 1;
-}
-
-.chart-zero {
-  stroke: var(--alert-soft);
-  stroke-width: 1;
-  stroke-dasharray: 5 5;
-}
-
-.chart-horizontal-guide {
-  stroke: var(--border);
-  stroke-width: 0.8;
-  stroke-dasharray: 3 4;
-  opacity: 0.6;
-}
-
-.chart-year-guide {
-  stroke-dasharray: 4 6;
-}
-
-.chart-area {
-  fill: color-mix(in srgb, var(--accent) 16%, transparent);
-}
-
-.chart-line {
-  fill: none;
-  stroke: var(--accent);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3.5;
-}
-
-.chart-scale {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--muted);
-  padding-left: 70px;
-  padding-right: 28px;
-}
-
-.chart-axis-label {
-  font-size: 13px;
-  fill: var(--muted-strong);
-  font-weight: 500;
+.chart-frame > canvas {
+  max-width: 100%;
 }
 
 .split-layout {

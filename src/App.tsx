@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from 'react'
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js'
+import { Line } from 'react-chartjs-2'
 
 import './App.css'
 import {
@@ -12,6 +14,8 @@ import {
   type SavingsPlanInput,
   type OneTimeExpense,
 } from './lib/finance'
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
 
 interface YearSummary {
   year: string
@@ -674,133 +678,83 @@ function App() {
 }
 
 function SavingsChart({ months }: { months: ProjectionMonth[] }) {
-  const width = 960
-  const height = 260
-  const paddingX = 70
-  const paddingY = 20
-  const usableWidth = width - paddingX * 2
-  const usableHeight = height - paddingY * 2
+  const labels = months.map((month) => formatMonthLabel(month.monthId))
   const values = months.map((month) => month.closingSavings)
+  
+  // Calculate nice grid lines
   const minimum = Math.min(...values, 0)
   const maximum = Math.max(...values, 0)
   const range = maximum - minimum || 1
-  const stepX = months.length > 1 ? usableWidth / (months.length - 1) : usableWidth
-
-  const yFor = (value: number) =>
-    paddingY + usableHeight - ((value - minimum) / range) * usableHeight
-
-  const points = months.map((month, index) => ({
-    month,
-    x: paddingX + index * stepX,
-    y: yFor(month.closingSavings),
-  }))
-
-  const line = points.map((point) => `${point.x},${point.y}`).join(' ')
-  const area = [
-    `${paddingX},${height - paddingY}`,
-    ...points.map((point) => `${point.x},${point.y}`),
-    `${paddingX + usableWidth},${height - paddingY}`,
-  ].join(' ')
-
-  const zeroLineY = yFor(0)
-  const yearMarkers = points.filter((_, index) => index % 12 === 0 || index === points.length - 1)
-
-  // Generate horizontal gridlines at nice intervals
-  const horizontalGridlines = generateHorizontalGridlines(minimum, maximum, range, paddingX, paddingX + usableWidth, yFor)
-
-  return (
-    <div className="chart-frame">
-      <svg
-        className="savings-chart"
-        viewBox={`0 0 ${width} ${height}`}
-        preserveAspectRatio="xMidYMid meet"
-        role="img"
-        aria-label="Gráfico de evolución del ahorro"
-      >
-        <line
-          className="chart-baseline"
-          x1={paddingX}
-          y1={height - paddingY}
-          x2={paddingX + usableWidth}
-          y2={height - paddingY}
-        />
-        <line
-          className="chart-zero"
-          x1={paddingX}
-          y1={zeroLineY}
-          x2={paddingX + usableWidth}
-          y2={zeroLineY}
-        />
-        {horizontalGridlines.map((line, index) => (
-          <g key={`h-grid-${index}`}>
-            <line
-              className="chart-horizontal-guide"
-              x1={paddingX}
-              y1={line.y}
-              x2={paddingX + usableWidth}
-              y2={line.y}
-            />
-            <text
-              className="chart-axis-label"
-              x={paddingX - 8}
-              y={line.y}
-              textAnchor="end"
-              dominantBaseline="middle"
-            >
-              {formatCurrency(line.value)}
-            </text>
-          </g>
-        ))}
-        {yearMarkers.map((marker) => (
-          <line
-            className="chart-year-guide"
-            key={marker.month.monthId}
-            x1={marker.x}
-            y1={paddingY}
-            x2={marker.x}
-            y2={height - paddingY}
-          />
-        ))}
-        <polyline className="chart-area" points={area} />
-        <polyline className="chart-line" points={line} />
-      </svg>
-
-      <div className="chart-scale">
-        {yearMarkers.map((marker) => (
-          <span key={marker.month.monthId}>{formatMonthLabel(marker.month.monthId)}</span>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function generateHorizontalGridlines(
-  minimum: number,
-  maximum: number,
-  range: number,
-  x1: number,
-  x2: number,
-  yFor: (value: number) => number
-) {
-  const gridlines = []
-  
-  // Calculate nice interval based on range
   let interval = Math.pow(10, Math.floor(Math.log10(range)))
   if (range / interval < 3) interval /= 2
   if (range / interval < 3) interval /= 2.5
   
-  // Start from a nice round number
-  const startValue = Math.ceil(minimum / interval) * interval
-  
-  // Generate gridlines
-  for (let value = startValue; value <= maximum; value += interval) {
-    gridlines.push({
-      value,
-      y: yFor(value),
-    })
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: 'Saldo',
+        data: values,
+        borderColor: 'rgb(195, 93, 33)',
+        backgroundColor: 'rgba(195, 93, 33, 0.1)',
+        borderWidth: 3,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointBackgroundColor: 'rgb(195, 93, 33)',
+      },
+    ],
   }
-  
-  return gridlines
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            return formatCurrency(context.parsed.y)
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: false,
+        min: Math.floor(minimum / interval) * interval,
+        max: Math.ceil(maximum / interval) * interval,
+        ticks: {
+          stepSize: interval,
+          callback: function(value: any) {
+            return formatCurrency(value)
+          },
+        },
+        grid: {
+          color: 'rgba(229, 229, 229, 0.6)',
+          drawBorder: true,
+        },
+      },
+      x: {
+        grid: {
+          color: 'rgba(229, 229, 229, 0.4)',
+          drawBorder: true,
+        },
+        ticks: {
+          maxTicksLimit: 7,
+        },
+      },
+    },
+  }
+
+  return (
+    <div className="chart-frame">
+      <Line data={data} options={options} />
+    </div>
+  )
 }
 
 function buildYearSummaries(months: ProjectionMonth[]): YearSummary[] {

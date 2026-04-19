@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js'
-import { Line } from 'react-chartjs-2'
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend } from 'chart.js'
+import { Chart } from 'react-chartjs-2'
 
 import './App.css'
 import {
@@ -15,7 +15,7 @@ import {
   type OneTimeExpense,
 } from './lib/finance'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend)
 
 interface YearSummary {
   year: string
@@ -680,6 +680,7 @@ function App() {
 function SavingsChart({ months }: { months: ProjectionMonth[] }) {
   const labels = months.map((month) => formatMonthLabel(month.monthId))
   const values = months.map((month) => month.closingSavings)
+  const netValues = months.map((month) => month.net)
   
   // Calculate nice grid lines
   const minimum = Math.min(...values, 0)
@@ -689,7 +690,7 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
   if (range / interval < 3) interval /= 2
   if (range / interval < 3) interval /= 2.5
   
-  const data = {
+  const dataLine = {
     labels,
     datasets: [
       {
@@ -707,7 +708,20 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
     ],
   }
 
-  const options = {
+  const dataBar = {
+    labels,
+    datasets: [
+      {
+        label: 'Resultado mensual',
+        data: netValues,
+        backgroundColor: netValues.map((val) => val >= 0 ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'),
+        borderColor: netValues.map((val) => val >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+        borderWidth: 1,
+      },
+    ],
+  }
+
+  const optionsLine = {
     responsive: true,
     maintainAspectRatio: true,
     plugins: {
@@ -750,10 +764,55 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
     },
   }
 
+  const optionsBar = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context: any) {
+            return formatCurrency(context.parsed.y)
+          },
+        },
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        ticks: {
+          callback: function(value: any) {
+            return formatCurrency(value)
+          },
+        },
+        grid: {
+          color: 'rgba(229, 229, 229, 0.6)',
+          drawBorder: true,
+        },
+      },
+      x: {
+        grid: {
+          color: 'rgba(229, 229, 229, 0.4)',
+          drawBorder: true,
+        },
+        ticks: {
+          maxTicksLimit: 7,
+        },
+      },
+    },
+  }
+
   return (
-    <div className="chart-frame">
-      <Line data={data} options={options} />
-    </div>
+    <>
+      <div className="chart-frame" style={{ marginBottom: '2rem' }}>
+        <Chart type="line" data={dataLine} options={optionsLine} />
+      </div>
+      <div className="chart-frame" style={{ height: '150px' }}>
+        <Chart type="bar" data={dataBar} options={optionsBar} />
+      </div>
+    </>
   )
 }
 

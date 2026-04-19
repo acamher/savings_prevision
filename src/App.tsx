@@ -14,6 +14,7 @@ import {
   type SavingsPlanInput,
   type OneTimeExpense,
 } from './lib/finance'
+import { translations, type Language } from './translations'
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Filler, Tooltip, Legend)
 
@@ -24,36 +25,25 @@ interface YearSummary {
   closingSavings: number
 }
 
-const monthOptions = [
-  { value: 1, label: 'Enero' },
-  { value: 2, label: 'Febrero' },
-  { value: 3, label: 'Marzo' },
-  { value: 4, label: 'Abril' },
-  { value: 5, label: 'Mayo' },
-  { value: 6, label: 'Junio' },
-  { value: 7, label: 'Julio' },
-  { value: 8, label: 'Agosto' },
-  { value: 9, label: 'Septiembre' },
-  { value: 10, label: 'Octubre' },
-  { value: 11, label: 'Noviembre' },
-  { value: 12, label: 'Diciembre' },
-] as const
-
-const frequencyOptions: Array<{ value: Frequency; label: string }> = [
-  { value: 'monthly', label: 'Mensual' },
-  { value: 'quarterly', label: 'Trimestral' },
-  { value: 'semiannual', label: 'Semestral' },
-  { value: 'annual', label: 'Anual' },
+const getMonthOptions = (t: typeof translations['es']) => t.monthLabels.map((lbl, i) => ({ value: i + 1, label: lbl }))
+const getFrequencyOptions = (t: typeof translations['es']): Array<{ value: Frequency; label: string }> => [
+  { value: 'monthly', label: t.freqLabels.monthly },
+  { value: 'quarterly', label: t.freqLabels.quarterly },
+  { value: 'semiannual', label: t.freqLabels.semiannual },
+  { value: 'annual', label: t.freqLabels.annual },
 ]
 
-const defaultPlan = createDefaultPlan()
-
 function App() {
-  const [draftPlan, setDraftPlan] = useState<SavingsPlanInput>(defaultPlan)
+  const [lang, setLang] = useState<Language>('es')
+  const t = translations[lang]
+  const monthOptions = getMonthOptions(t)
+  const frequencyOptions = getFrequencyOptions(t)
+
+  const [draftPlan, setDraftPlan] = useState<SavingsPlanInput>(() => createDefaultPlan(translations['es']))
   const [submittedPlan, setSubmittedPlan] = useState<SavingsPlanInput | null>(null)
 
   const projection = submittedPlan ? projectSavings(submittedPlan) : null
-  const yearSummaries = projection ? buildYearSummaries(projection.months) : []
+  const yearSummaries = projection ? buildYearSummaries(projection.months, lang) : []
   const lowestMonths = projection
     ? [...projection.months]
       .sort((left, right) => left.closingSavings - right.closingSavings)
@@ -110,28 +100,38 @@ function App() {
     <div className="app-shell">
       <header className="app-header">
         <div>
-          <h1>Planificador de ahorros a cinco años</h1>
-          <p>
-            Define tus ingresos, pagas extra y compromisos futuros antes de calcular
-            el saldo mes a mes y el colchón mínimo para aguantar ocho meses.
-          </p>
+          <h1>{t.appTitle}</h1>
+          <p>{t.appDesc}</p>
         </div>
-        <button className="primary-button" type="submit" form="planner-form">
-          Calcular escenario
-        </button>
+        <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
+          <label className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
+            <span>{t.langSelector}</span>
+            <select 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value as Language)}
+              style={{ minHeight: '36px', padding: '6px 12px' }}
+            >
+              <option value="es">Español</option>
+              <option value="en">English</option>
+            </select>
+          </label>
+          <button className="primary-button" type="submit" form="planner-form">
+            {t.calcBtn}
+          </button>
+        </div>
       </header>
 
       <main className="workspace">
         <form id="planner-form" className="editor-column" onSubmit={handleSubmit}>
           <section className="panel">
             <div className="panel-heading">
-              <h2>Punto de partida</h2>
-              <p>El cálculo arranca en el mes que indiques y se proyecta durante 60 meses.</p>
+              <h2>{t.startHead}</h2>
+              <p>{t.startDesc}</p>
             </div>
 
             <div className="two-column-grid">
               <label className="field">
-                <span>Mes inicial</span>
+                <span>{t.startMonth}</span>
                 <input
                   type="month"
                   value={draftPlan.startMonth}
@@ -145,7 +145,7 @@ function App() {
               </label>
 
               <label className="field">
-                <span>Ahorro actual</span>
+                <span>{t.currentSavings}</span>
                 <input
                   type="number"
                   min="0"
@@ -165,8 +165,8 @@ function App() {
           <section className="panel">
             <div className="section-header">
               <div className="panel-heading">
-                <h2>Ingresos mensuales</h2>
-                <p>Añade tantas fuentes recurrentes como necesites.</p>
+                <h2>{t.monthlyHead}</h2>
+                <p>{t.monthlyDesc}</p>
               </div>
               <button
                 className="secondary-button"
@@ -178,7 +178,7 @@ function App() {
                   }))
                 }
               >
-                Añadir ingreso
+                {t.addIncome}
               </button>
             </div>
 
@@ -186,7 +186,7 @@ function App() {
               {draftPlan.monthlyIncomes.map((entry) => (
                 <div className="entry-grid income-grid" key={entry.id}>
                   <label className="field grow">
-                    <span>Concepto</span>
+                    <span>{t.concept}</span>
                     <input
                       type="text"
                       value={entry.label}
@@ -197,7 +197,7 @@ function App() {
                   </label>
 
                   <label className="field amount-field">
-                    <span>Importe mensual</span>
+                    <span>{t.monthlyAmount}</span>
                     <input
                       type="number"
                       min="0"
@@ -223,7 +223,7 @@ function App() {
                       }))
                     }
                   >
-                    Eliminar
+                    {t.remove}
                   </button>
                 </div>
               ))}
@@ -233,8 +233,8 @@ function App() {
           <section className="panel">
             <div className="section-header">
               <div className="panel-heading">
-                <h2>Pagas extra</h2>
-                <p>Se repiten cada año en el mes elegido.</p>
+                <h2>{t.extraHead}</h2>
+                <p>{t.extraDesc}</p>
               </div>
               <button
                 className="secondary-button"
@@ -246,7 +246,7 @@ function App() {
                   }))
                 }
               >
-                Añadir paga
+                {t.addExtra}
               </button>
             </div>
 
@@ -254,7 +254,7 @@ function App() {
               {draftPlan.extraIncomes.map((entry) => (
                 <div className="entry-grid extra-grid" key={entry.id}>
                   <label className="field grow">
-                    <span>Concepto</span>
+                    <span>{t.concept}</span>
                     <input
                       type="text"
                       value={entry.label}
@@ -265,7 +265,7 @@ function App() {
                   </label>
 
                   <label className="field amount-field">
-                    <span>Importe</span>
+                    <span>{t.amount}</span>
                     <input
                       type="number"
                       min="0"
@@ -278,7 +278,7 @@ function App() {
                   </label>
 
                   <label className="field select-field">
-                    <span>Mes</span>
+                    <span>{t.month}</span>
                     <select
                       value={entry.month}
                       onChange={(event) =>
@@ -307,7 +307,7 @@ function App() {
                       }))
                     }
                   >
-                    Eliminar
+                    {t.remove}
                   </button>
                 </div>
               ))}
@@ -317,8 +317,8 @@ function App() {
           <section className="panel">
             <div className="section-header">
               <div className="panel-heading">
-                <h2>Gastos recurrentes</h2>
-                <p>Puedes mezclar cuotas mensuales, trimestrales, semestrales o anuales.</p>
+                <h2>{t.recurHead}</h2>
+                <p>{t.recurDesc}</p>
               </div>
               <button
                 className="secondary-button"
@@ -333,7 +333,7 @@ function App() {
                   }))
                 }
               >
-                Añadir gasto
+                {t.addExpense}
               </button>
             </div>
 
@@ -341,7 +341,7 @@ function App() {
               {draftPlan.recurringExpenses.map((entry) => (
                 <div className="entry-grid recurring-grid" key={entry.id}>
                   <label className="field grow">
-                    <span>Concepto</span>
+                    <span>{t.concept}</span>
                     <input
                       type="text"
                       value={entry.label}
@@ -352,7 +352,7 @@ function App() {
                   </label>
 
                   <label className="field amount-field">
-                    <span>Importe</span>
+                    <span>{t.amount}</span>
                     <input
                       type="number"
                       min="0"
@@ -367,7 +367,7 @@ function App() {
                   </label>
 
                   <label className="field select-field">
-                    <span>Frecuencia</span>
+                    <span>{t.freq}</span>
                     <select
                       value={entry.frequency}
                       onChange={(event) =>
@@ -385,7 +385,7 @@ function App() {
                   </label>
 
                   <label className="field">
-                    <span>Empieza</span>
+                    <span>{t.starts}</span>
                     <input
                       type="month"
                       value={entry.startMonth}
@@ -398,7 +398,7 @@ function App() {
                   </label>
 
                   <label className="field">
-                    <span>Termina</span>
+                    <span>{t.ends}</span>
                     <input
                       type="month"
                       value={entry.endMonth ?? ''}
@@ -422,7 +422,7 @@ function App() {
                       }))
                     }
                   >
-                    Eliminar
+                    {t.remove}
                   </button>
                 </div>
               ))}
@@ -432,8 +432,8 @@ function App() {
           <section className="panel">
             <div className="section-header">
               <div className="panel-heading">
-                <h2>Pagos puntuales</h2>
-                <p>Úsalos para compras concretas, entradas o desembolsos únicos.</p>
+                <h2>{t.onetimeHead}</h2>
+                <p>{t.onetimeDesc}</p>
               </div>
               <button
                 className="secondary-button"
@@ -456,7 +456,7 @@ function App() {
               {draftPlan.oneTimeExpenses.map((entry) => (
                 <div className="entry-grid one-time-grid" key={entry.id}>
                   <label className="field grow">
-                    <span>Concepto</span>
+                    <span>{t.concept}</span>
                     <input
                       type="text"
                       value={entry.label}
@@ -467,7 +467,7 @@ function App() {
                   </label>
 
                   <label className="field amount-field">
-                    <span>Importe</span>
+                    <span>{t.amount}</span>
                     <input
                       type="number"
                       min="0"
@@ -480,7 +480,7 @@ function App() {
                   </label>
 
                   <label className="field">
-                    <span>Mes del pago</span>
+                    <span>{t.paymentMonth}</span>
                     <input
                       type="month"
                       value={entry.date}
@@ -502,7 +502,7 @@ function App() {
                       }))
                     }
                   >
-                    Eliminar
+                    {t.remove}
                   </button>
                 </div>
               ))}
@@ -511,7 +511,7 @@ function App() {
 
           <div className="form-actions">
             <button className="primary-button" type="submit">
-              Calcular escenario
+              {t.calcBtn}
             </button>
           </div>
         </form>
@@ -519,10 +519,10 @@ function App() {
         <section className="results-column">
           {!projection && (
             <section className="panel placeholder-panel">
-              <h2>Resultados pendientes</h2>
+              <h2>{t.pendingHead}</h2>
               <p>
-                Ajusta primero tus ingresos y gastos, y después pulsa en
-                <strong> Calcular escenario</strong> para ver la proyección completa.
+                {t.pendingDesc1}
+                <strong>{t.pendingResultsCalc}</strong>{t.pendingDesc2}
               </p>
             </section>
           )}
@@ -531,36 +531,35 @@ function App() {
             <>
               <section className="summary-grid">
                 <article className="summary-card highlighted">
-                  <span className="summary-label">Saldo al cabo de cinco años</span>
+                  <span className="summary-label">{t.balanceFive}</span>
                   <strong>{formatCurrency(projection.finalSavings)}</strong>
                   <p>
-                    Balance acumulado tras {projection.months.length} meses desde{' '}
+                    {t.balanceAcc1} {projection.months.length} {t.balanceAcc2}{' '}
                     {projection.months[0].label}.
                   </p>
                 </article>
 
                 <article className="summary-card">
-                  <span className="summary-label">Mes más delicado</span>
+                  <span className="summary-label">{t.lowestMonth}</span>
                   <strong>{formatCurrency(projection.lowestSavings)}</strong>
-                  <p>El saldo más bajo aparece en {formatMonthLabel(projection.lowestSavingsMonth)}.</p>
+                  <p>{t.lowestMonthDesc} {formatMonthLabel(projection.lowestSavingsMonth, lang)}.</p>
                 </article>
 
                 <article className="summary-card">
-                  <span className="summary-label">Gasto total previsto</span>
+                  <span className="summary-label">{t.totalExp}</span>
                   <strong>{formatCurrency(projection.totalExpenses)}</strong>
                   <p>
-                    {formatCurrency(projection.totalOneTimeExpenses)} son pagos puntuales ya
-                    planificados.
+                    {formatCurrency(projection.totalOneTimeExpenses)} {t.totalExpDesc}
                   </p>
                 </article>
 
                 <article className="summary-card">
-                  <span className="summary-label">Colchón para 8 meses</span>
+                  <span className="summary-label">{t.cushion}</span>
                   <strong>{formatCurrency(projection.minimumEmergencySavings)}</strong>
                   <p className={emergencyGap >= 0 ? 'status-good' : 'status-alert'}>
                     {emergencyGap >= 0
-                      ? `Tus ahorros iniciales cubren ese mínimo y sobran ${formatCurrency(emergencyGap)}.`
-                      : `Te faltan ${formatCurrency(Math.abs(emergencyGap))} para cubrir ese mínimo.`}
+                      ? `${t.cushionGood} ${formatCurrency(emergencyGap)}.`
+                      : `${t.cushionAlert1} ${formatCurrency(Math.abs(emergencyGap))} ${t.cushionAlert2}`}
                   </p>
                 </article>
               </section>
@@ -568,36 +567,33 @@ function App() {
               <section className="panel">
                 <div className="section-header static">
                   <div className="panel-heading">
-                    <h2>Evolución del saldo</h2>
-                    <p>
-                      Se muestra el cierre de cada mes, incluyendo las pagas extra y los gastos
-                      puntuales en el momento en que ocurren.
-                    </p>
+                    <h2>{t.chartHead}</h2>
+                    <p>{t.chartDesc}</p>
                   </div>
                   <div className="chart-meta">
-                    <span>Media mensual necesaria para el colchón: </span>
+                    <span>{t.avgCushion} </span>
                     <strong>{formatCurrency(projection.emergencyMonthlyAverage)}</strong>
                   </div>
                 </div>
 
-                <SavingsChart months={projection.months} />
+                <SavingsChart months={projection.months} lang={lang} />
               </section>
 
               <section className="split-layout">
                 <section className="panel">
                   <div className="panel-heading">
-                    <h2>Cierre por año</h2>
-                    <p>Resumen anual para detectar si el plan mantiene tracción.</p>
+                    <h2>{t.yearCloseHead}</h2>
+                    <p>{t.yearCloseDesc}</p>
                   </div>
 
                   <div className="table-wrap">
                     <table>
                       <thead>
                         <tr>
-                          <th>Año</th>
-                          <th>Ingresos</th>
-                          <th>Gastos</th>
-                          <th>Saldo al cierre</th>
+                          <th>{t.thYear}</th>
+                          <th>{t.thIncome}</th>
+                          <th>{t.thExp}</th>
+                          <th>{t.thClose}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -616,8 +612,8 @@ function App() {
 
                 <section className="panel">
                   <div className="panel-heading">
-                    <h2>Meses más exigentes</h2>
-                    <p>Sirven para anticipar cuándo necesitarás más caja.</p>
+                    <h2>{t.stressHead}</h2>
+                    <p>{t.stressDesc}</p>
                   </div>
 
                   <ul className="stress-list">
@@ -625,7 +621,7 @@ function App() {
                       <li key={month.monthId}>
                         <div>
                           <strong>{month.label}</strong>
-                          <span>{formatCurrency(month.totalExpenses)} de salidas ese mes</span>
+                          <span>{formatCurrency(month.totalExpenses)} {t.outflowsLabel}</span>
                         </div>
                         <strong className={month.closingSavings < 0 ? 'status-alert' : undefined}>
                           {formatCurrency(month.closingSavings)}
@@ -638,16 +634,16 @@ function App() {
 
               <section className="panel">
                 <div className="panel-heading">
-                  <h2>Próximos 12 meses</h2>
-                  <p>Detalle operativo del primer año de la proyección.</p>
+                  <h2>{t.next12Head}</h2>
+                  <p>{t.next12Desc}</p>
                 </div>
 
                 <div className="table-wrap">
                   <table>
                     <thead>
                       <tr>
-                        <th>Mes</th>
-                        <th>Ingresos</th>
+                        <th>{t.thMonth}</th>
+                        <th>{t.thIncome}</th>
                         <th>Gastos</th>
                         <th>Neto</th>
                         <th>Saldo final</th>
@@ -677,8 +673,9 @@ function App() {
   )
 }
 
-function SavingsChart({ months }: { months: ProjectionMonth[] }) {
-  const labels = months.map((month) => formatMonthLabel(month.monthId))
+function SavingsChart({ months, lang }: { months: ProjectionMonth[], lang: Language }) {
+  const t = translations[lang]
+  const labels = months.map((month) => formatMonthLabel(month.monthId, lang))
   const values = months.map((month) => month.closingSavings)
   const netValues = months.map((month) => month.net)
   
@@ -694,7 +691,7 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
     labels,
     datasets: [
       {
-        label: 'Saldo',
+        label: t.colChartBalance,
         data: values,
         borderColor: 'rgb(195, 93, 33)',
         backgroundColor: 'rgba(195, 93, 33, 0.1)',
@@ -712,7 +709,7 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
     labels,
     datasets: [
       {
-        label: 'Resultado mensual',
+        label: t.colChartNet,
         data: netValues,
         backgroundColor: netValues.map((val) => val >= 0 ? 'rgba(34, 197, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)'),
         borderColor: netValues.map((val) => val >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
@@ -816,7 +813,8 @@ function SavingsChart({ months }: { months: ProjectionMonth[] }) {
   )
 }
 
-function buildYearSummaries(months: ProjectionMonth[]): YearSummary[] {
+function buildYearSummaries(months: ProjectionMonth[], lang: Language): YearSummary[] {
+  const t = translations[lang]
   const summaries: YearSummary[] = []
 
   for (let index = 0; index < months.length; index += 12) {
@@ -826,7 +824,7 @@ function buildYearSummaries(months: ProjectionMonth[]): YearSummary[] {
     const closingSavings = slice[slice.length - 1]?.closingSavings ?? 0
 
     summaries.push({
-      year: `Año ${Math.floor(index / 12) + 1}`,
+      year: `${t.thYear} ${Math.floor(index / 12) + 1}`,
       income,
       expenses,
       closingSavings,
@@ -836,7 +834,7 @@ function buildYearSummaries(months: ProjectionMonth[]): YearSummary[] {
   return summaries
 }
 
-function createDefaultPlan(): SavingsPlanInput {
+function createDefaultPlan(t: typeof translations['es']): SavingsPlanInput {
   const startMonth = getCurrentMonthId()
 
   return {
@@ -844,31 +842,31 @@ function createDefaultPlan(): SavingsPlanInput {
     initialSavings: 5000,
     projectionMonths: 60,
     monthlyIncomes: [
-      { id: createId('income'), label: 'Nómina neta', amount: 1500 },
-      { id: createId('income'), label: 'Alquiler de plaza', amount: 90 },
+      { id: createId('income'), label: t.defIncomes[0], amount: 1500 },
+      { id: createId('income'), label: t.defIncomes[1], amount: 90 },
     ],
     extraIncomes: [
-      { id: createId('extra'), label: 'Paga de verano', amount: 2000, month: 6 },
-      { id: createId('extra'), label: 'Paga de navidad', amount: 2000, month: 12 },
+      { id: createId('extra'), label: t.defExtras[0], amount: 2000, month: 6 },
+      { id: createId('extra'), label: t.defExtras[1], amount: 2000, month: 12 },
     ],
     recurringExpenses: [
       {
         id: createId('expense'),
-        label: 'Vivienda y suministros',
+        label: t.defExpenses[0],
         amount: 600,
         frequency: 'monthly',
         startMonth,
       },
       {
         id: createId('expense'),
-        label: 'Seguro del coche',
+        label: t.defExpenses[1],
         amount: 500,
         frequency: 'annual',
         startMonth,
       },
       {
         id: createId('expense'),
-        label: 'Mantenimiento y ocio',
+        label: t.defExpenses[2],
         amount: 250,
         frequency: 'monthly',
         startMonth,
@@ -877,7 +875,7 @@ function createDefaultPlan(): SavingsPlanInput {
     oneTimeExpenses: [
       {
         id: createId('payment'),
-        label: 'Pago final del coche',
+        label: t.defPayment,
         amount: 6500,
         date: shiftMonth(startMonth, 2),
       },
@@ -956,9 +954,9 @@ function toAmount(value: string): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.round(parsed) : 0
 }
 
-function formatMonthLabel(monthId: string): string {
+function formatMonthLabel(monthId: string, lang: Language): string {
   const [year, month] = monthId.split('-').map(Number)
-  return new Intl.DateTimeFormat('es-ES', {
+  return new Intl.DateTimeFormat(lang === 'en' ? 'en-US' : 'es-ES', {
     month: 'short',
     year: 'numeric',
     timeZone: 'UTC',

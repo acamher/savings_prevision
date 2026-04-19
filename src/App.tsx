@@ -106,8 +106,8 @@ function App() {
         <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
           <label className="field" style={{ flexDirection: 'row', alignItems: 'center', gap: '8px' }}>
             <span>{t.langSelector}</span>
-            <select 
-              value={lang} 
+            <select
+              value={lang}
               onChange={(e) => setLang(e.target.value as Language)}
               style={{ minHeight: '36px', padding: '6px 12px' }}
             >
@@ -678,7 +678,7 @@ function SavingsChart({ months, lang }: { months: ProjectionMonth[], lang: Langu
   const labels = months.map((month) => formatMonthLabel(month.monthId, lang))
   const values = months.map((month) => month.closingSavings)
   const netValues = months.map((month) => month.net)
-  
+
   // Calculate nice grid lines
   const minimum = Math.min(...values, 0)
   const maximum = Math.max(...values, 0)
@@ -686,7 +686,7 @@ function SavingsChart({ months, lang }: { months: ProjectionMonth[], lang: Langu
   let interval = Math.pow(10, Math.floor(Math.log10(range)))
   if (range / interval < 3) interval /= 2
   if (range / interval < 3) interval /= 2.5
-  
+
   const dataLine = {
     labels,
     datasets: [
@@ -727,7 +727,7 @@ function SavingsChart({ months, lang }: { months: ProjectionMonth[], lang: Langu
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             return formatCurrency(context.parsed.y)
           },
         },
@@ -740,7 +740,7 @@ function SavingsChart({ months, lang }: { months: ProjectionMonth[], lang: Langu
         max: Math.ceil(maximum / interval) * interval,
         ticks: {
           stepSize: interval,
-          callback: function(value: any) {
+          callback: function (value: any) {
             return formatCurrency(value)
           },
         },
@@ -770,7 +770,7 @@ function SavingsChart({ months, lang }: { months: ProjectionMonth[], lang: Langu
       },
       tooltip: {
         callbacks: {
-          label: function(context: any) {
+          label: function (context: any) {
             return formatCurrency(context.parsed.y)
           },
         },
@@ -780,7 +780,7 @@ function SavingsChart({ months, lang }: { months: ProjectionMonth[], lang: Langu
       y: {
         beginAtZero: true,
         ticks: {
-          callback: function(value: any) {
+          callback: function (value: any) {
             return formatCurrency(value)
           },
         },
